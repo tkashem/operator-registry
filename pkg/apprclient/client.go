@@ -16,6 +16,8 @@ type Client interface {
 	// RetrieveOne retrieves a given package from the source
 	RetrieveOne(name, release string) (*OperatorMetadata, error)
 
+	RetrieveBlob(name, release string) (*OperatorMetadata, error)
+
 	// ListPackages returns metadata associated with each package in the
 	// specified namespace.
 	ListPackages(namespace string) ([]*RegistryMetadata, error)
@@ -105,6 +107,36 @@ func (c *client) RetrieveOne(name, release string) (*OperatorMetadata, error) {
 			Digest:    digest,
 		},
 		RawYAML: decoded,
+	}
+
+	return om, nil
+}
+
+func (c *client) RetrieveBlob(name, release string) (*OperatorMetadata, error) {
+	namespace, repository, err := split(name)
+	if err != nil {
+		return nil, err
+	}
+
+	metadata, err := c.adapter.GetPackageMetadata(namespace, repository, release)
+	if err != nil {
+		return nil, err
+	}
+
+	digest := metadata.Content.Digest
+	blob, err := c.adapter.DownloadOperatorManifest(namespace, repository, digest)
+	if err != nil {
+		return nil, err
+	}
+
+	om := &OperatorMetadata{
+		RegistryMetadata: RegistryMetadata{
+			Namespace: namespace,
+			Name:      repository,
+			Release:   release,
+			Digest:    digest,
+		},
+		RawYAML: blob,
 	}
 
 	return om, nil

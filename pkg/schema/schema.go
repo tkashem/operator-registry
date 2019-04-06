@@ -180,8 +180,11 @@ func validatePackageManifest(fileBytes []byte, csvFilenames []string) error {
 }
 
 func validateCRD(schemaFileName string, fileBytes []byte) error {
+	fmt.Printf("validate crd: %s\n", schemaFileName)
+
 	schemaBytes, err := ioutil.ReadFile(schemaFileName)
 	if err != nil {
+		fmt.Printf("file not found: %s\n", schemaFileName)
 		return err
 	}
 	schemaBytesJson, err := yaml.YAMLToJSON(schemaBytes)
@@ -277,6 +280,9 @@ func validateResource(path string, f os.FileInfo, err error) error {
 
 	isKubResource := false
 	for _, pragma := range pragmas {
+
+		fmt.Printf("handling pragma: %s\n", pragma)
+
 		fileReader.Reset(exampleFileReader)
 		isKub, err := validateUsingPragma(pragma, fileBytes)
 		if err != nil {
